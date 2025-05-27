@@ -1,0 +1,50 @@
+#!/usr/bin/bpftrace
+#include <linux/sched.h>
+#include <linux/sched/idle.h>
+
+struct lb_env {
+	struct sched_domain	*sd;
+
+	struct rq		*src_rq;
+	int			src_cpu;
+
+	int			dst_cpu;
+	struct rq		*dst_rq;
+
+	struct cpumask		*dst_grpmask;
+	int			new_dst_cpu;
+	enum cpu_idle_type	idle;
+	long			imbalance;
+	/* The set of CPUs under consideration for load-balancing */
+	struct cpumask		*cpus;
+
+	unsigned int		flags;
+
+	unsigned int		loop;
+	unsigned int		loop_break;
+	unsigned int		loop_max;
+
+	int		fbq_type;
+	int	migration_type;
+	struct list_head	tasks;
+};
+
+kprobe:can_migrate_task
+/arg1 != 0/
+{
+	$env = (struct lb_env *)arg1;
+	$p = (struct task_struct *)arg0;
+	@migration_type[$env->migration_type] = count();
+	if (($p->se.sched_delayed)  && ($env->migration_type != 0)) {
+		@run_delay = count();
+	}
+
+//	@migration_type2[(uint32)arg2] = count();
+}
+/*
+interval:s:120 {
+	print(@migration_type);
+//	print(@migration_type2);
+	printf("\n")
+}
+*/

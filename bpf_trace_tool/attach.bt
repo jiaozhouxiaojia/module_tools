@@ -1,0 +1,30 @@
+#!/usr/bin/bpftrace
+#include <linux/sched.h>
+
+kprobe:activate_task
+/arg1 != 0/
+{
+	$p = (struct task_struct *)arg1;
+	if ($p->se.sched_delayed && $p->on_rq > 1 && $p->se.vlag > 0) {
+		@on_rq[kstack(), $p->se.on_rq, $p->se.sched_delayed] = count();
+	}
+}
+/*
+kprobe:requeue_delayed_entity
+/arg0 != 0/
+{
+	$se = (struct sched_entity *)arg0;
+	if ($se->vlag > 0 && $se->on_rq) {
+		@[kstack(), $se->vlag] = count();
+	}
+}
+
+kprobe:deactivate_task
+/arg1 != 0/
+{
+	$p = (struct task_struct *)arg1;
+	if ($p->se.sched_delayed && $p->on_rq > 1) {
+		@on_rq[kstack(), $p->se.on_rq, $p->se.sched_delayed] = count();
+	}
+}
+*/

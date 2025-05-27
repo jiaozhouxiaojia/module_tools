@@ -1,0 +1,40 @@
+#!/usr/bin/bpftrace
+#include <linux/hrtimer.h>
+#include <linux/sched.h>
+
+/*
+tracepoint:timer:hrtimer_setup
+/!strncmp(comm, "cyclictest", 5)/
+{
+	printf("hrtimer_setup: pid=%d comm=%s hrtimer=%p clockid=%d mode=%d\n",
+	       pid, comm, args->hrtimer, args->clockid, args->mode);
+}
+*/
+
+/*
+tracepoint:timer:hrtimer_start
+/!strncmp(comm, "cyclictest", 5)/
+{
+	printf("hrtimer_start: pid=%d comm=%s function=%pS expires=%llu hrtimer=%p mode=%d\n",
+		 pid, comm, args->function, args->expires, args->hrtimer, args->mode);
+
+	$task = (struct task_struct *)curtask;
+	@[kstack(),comm,tid,args->expires, ksym(args->function), $task->policy, args->mode]=count();
+}
+*/
+kprobe:__hrtimer_setup
+/!strncmp(comm, "cyclictest", 5)/
+{
+//	printf("clockid=%d mode=%d\n", arg2, arg3);
+//	@[kstack(),comm,tid]=count();
+	$task = (struct task_struct *)curtask;
+	@[kstack(), comm, tid, ksym(arg1), arg3, $task->policy]=count();
+}
+
+/*
+   END
+   {
+   printf("clock_nanosleep syscall count: %d\n", @clock_nanosleep_count);
+   printf("nanosleep syscall count: %d\n", @nanosleep_count);
+   }
+ */

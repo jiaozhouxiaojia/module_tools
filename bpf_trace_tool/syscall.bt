@@ -1,0 +1,17 @@
+#!/usr/bin/bpftrace
+#include <linux/hrtimer.h>
+#include <linux/sched.h>
+
+// tracepoint:syscalls:sys_enter_*
+// bpftrace -l 'tracepoint:syscalls:sys_enter_*nanosleep*'
+
+tracepoint:syscalls:sys_enter_clock_nanosleep
+{
+	@clock_nanosleep_count++;
+}
+
+tracepoint:syscalls:sys_enter_nanosleep
+{
+	@nanosleep_count++;
+}
+

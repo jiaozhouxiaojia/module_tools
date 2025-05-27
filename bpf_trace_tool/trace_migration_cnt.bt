@@ -1,0 +1,8 @@
+bpftrace -e 'kprobe:can_migrate_task {
+@hit_delay = *(int32*)kaddr("hit_delay_dequeue");
+@hit_ineligible = *(int32*)kaddr("hit_ineligible");
+@can_migrate_cnt = *(int32*)kaddr("can_migrate_cnt");
+@hit_delay;
+@hit_ineligible;
+@can_migrate_cnt;
+}'

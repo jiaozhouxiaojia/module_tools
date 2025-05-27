@@ -1,0 +1,20 @@
+#!/usr/bin/bpftrace
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+
+kprobe:__setup_irq
+{
+	$new = (struct irqaction *)arg2;
+
+	@[comm,tid,arg0,$new->flags,kstack()]=count();
+}
+
+
+kprobe:request_threaded_irq
+{
+	@b[comm,tid,arg0,arg3,kstack()]=count();
+}
+kprobe:setup_irq_thread
+{
+	@a[comm,tid,kstack()]=count();
+}
